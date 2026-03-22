@@ -27,7 +27,7 @@ jobs:
       - name: Determine the current kernel version
         run: |
           set -euxo pipefail
-          echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
+          echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./Makefile | awk '{print $3}')" >> $GITHUB_ENV
 
       - name: Set up swap space
         uses: pierotofy/set-swap-space@master
