@@ -33,7 +33,7 @@ jobs:
           echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
 
           # Integrate WildKSU
-          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/refs/heads/canary/kernel/setup.sh" | bash -s canary
+          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/refs/heads/canary/kernel/setup.sh" | bash -s a97ee613ad317d9455e2101276375adf0499cf22
 
           # Integrate SuSFS
           git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
@@ -65,7 +65,6 @@ jobs:
           CONFIG_HAVE_KPROBES=y
           CONFIG_KSU=y
           CONFIG_KSU_KPROBES_HOOK=y
-          CONFIG_KSU_MANUAL_HOOKS=y
           CONFIG_KSU_SUSFS=y
           CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
           CONFIG_KSU_SUSFS_SUS_PATH=n
