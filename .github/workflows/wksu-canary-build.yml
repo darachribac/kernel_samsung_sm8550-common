@@ -21,13 +21,6 @@ jobs:
             lzop zlib1g-dev pahole dwarves cpio zip \
             python3 python-is-python3 tar perl lz4 jq
 
-      - name: Clone source
-        run: |
-          git clone --depth=1 -b android13-5.15 https://github.com/gyabii/kernel_samsung_sm8550-common.git kernel-s23
-          
-          # Determine the current kernel version
-          echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
-
       - name: Download anykernel.zip
         run: |
           wget -q https://github.com/gyabii/kernel_samsung_sm8550-common/releases/download/anykernel/anykernel.zip
@@ -35,7 +28,6 @@ jobs:
       - name: Apply WildKSU with SuSFS
         run: |
           set -euxo pipefail
-          cd kernel-s23
 
           # Determine the current kernel version
           echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
@@ -100,7 +92,6 @@ jobs:
 
       - name: Build the kernel
         run: |
-          cd kernel-s23
           chmod +x scripts/build.sh
           ./scripts/build.sh 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
 
@@ -110,7 +101,7 @@ jobs:
           echo "DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
           set -euxo pipefail
           unzip "anykernel.zip" -d anykernel/
-          cp kernel-s23/out/arch/arm64/boot/Image.gz anykernel/
+          cp out/arch/arm64/boot/Image.gz anykernel/
           # Build final name
           ZIP_NAME="common-5.15.${KERNEL_VERSION}-gyabii_wksu-canary-susfs-$(date +%d%m%y-%H%M%S)"
           cd anykernel
