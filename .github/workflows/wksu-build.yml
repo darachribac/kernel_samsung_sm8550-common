@@ -30,7 +30,7 @@ jobs:
           set -euxo pipefail
 
           # Determine the current kernel version
-          echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' .//Makefile | awk '{print $3}')" >> $GITHUB_ENV
+          echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./Makefile | awk '{print $3}')" >> $GITHUB_ENV
 
           # Integrate WildKSU
           curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/refs/heads/stable/kernel/setup.sh" | bash -s stable
