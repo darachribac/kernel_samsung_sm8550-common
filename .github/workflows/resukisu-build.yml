@@ -102,11 +102,11 @@ jobs:
           cd out/arch/arm64/boot
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
           chmod +x patch
-          gunzip -k Image.gz
+          gunzip -f Image.gz
           ./patch Image
           rm -rf Image
           mv oImage Image
-          gzip -k Image
+          gzip -f Image
 
       - name: Package image with AnyKernel3
         id: package
