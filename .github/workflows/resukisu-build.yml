@@ -1,5 +1,5 @@
-# build.yml kanged from Rezoss Reza modified to build kernel with ReSukiSU and SuSFS using the main branch
-name: Build kernel (ReSukiSU, SuSFS, `stable` branch)
+# build.yml kanged from Rezoss Reza modified to build kernel with ReSukiSU, KPM and SuSFS using the main branch
+name: Build kernel (ReSukiSU, KPM, SuSFS, `main` branch)
 on:
   workflow_dispatch:
 
@@ -82,6 +82,7 @@ jobs:
           CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
           CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
           CONFIG_KSU_SUSFS_SUS_SU=n
+          CONFIG_KPM=y
           CONFIG_KPROBES=y
           CONFIG_KPROBE_EVENTS=y
           EOF
