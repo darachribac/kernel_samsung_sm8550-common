@@ -62,7 +62,10 @@ jobs:
 
           CONFIG_FILE=arch/arm64/configs/gki_defconfig
           cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_HAVE_KPROBES=y
           CONFIG_KSU=y
+          CONFIG_KSU_KPROBES_HOOK=y
+          CONFIG_KSU_MANUAL_HOOKS=y
           CONFIG_KSU_SUSFS=y
           CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
           CONFIG_KSU_SUSFS_SUS_PATH=n
@@ -77,6 +80,8 @@ jobs:
           CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
           CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
           CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
+          CONFIG_KPROBES=y
+          CONFIG_KPROBE_EVENTS=y
           EOF
 
       - name: Set up swap space
