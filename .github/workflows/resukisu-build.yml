@@ -89,6 +89,8 @@ jobs:
 
       - name: Build the kernel
         run: |
+          git config --global user.email "gyabii@proton.me"
+          git config --global user.name "gyabii"
           chmod +x scripts/build.sh
           ./scripts/build.sh 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
           
