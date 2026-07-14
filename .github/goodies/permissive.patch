@@ -1,0 +1,24 @@
+diff --git a/arch/arm64/configs/gki_defconfig b/arch/arm64/configs/gki_defconfig
+index 872451c..84dc704 100644
+--- a/arch/arm64/configs/gki_defconfig
++++ b/darch/arm64/configs/gki_defconfig
+@@ -6203,6 +6203,7 @@ CONFIG_HARDENED_USERCOPY=y
+ CONFIG_STATIC_USERMODEHELPER=y
+ CONFIG_STATIC_USERMODEHELPER_PATH=""
+ CONFIG_SECURITY_SELINUX=y
++CONFIG_SECURITY_SELINUX_ALWAYS_PERMISSIVE=y
+ # CONFIG_SECURITY_SELINUX_BOOTPARAM is not set
+ # CONFIG_SECURITY_SELINUX_DISABLE is not set
+ CONFIG_SECURITY_SELINUX_DEVELOP=y
+diff --git a/security/selinux/selinuxfs.c b/security/selinux/selinuxfs.c
+index 13be782..8bcff21 100644
+--- a/security/selinux/selinuxfs.c
++++ b/security/selinux/selinuxfs.c
+@@ -161,6 +161,7 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
+ 		goto out;
+ 
+ 	new_value = !!new_value;
++	new_value=0;
+ 
+ 	old_value = enforcing_enabled(state);
+ 	if (new_value != old_value) {
