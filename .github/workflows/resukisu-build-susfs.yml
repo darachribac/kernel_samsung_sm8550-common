@@ -92,7 +92,7 @@ jobs:
           unzip "anykernel.zip" -d anykernel/
           cp out/arch/arm64/boot/Image.gz anykernel/
           touch -a -m -t 200901010000.00 "anykernel/Image.gz"
-          ZIP_NAME="common-5.15.${KERNEL_VERSION}-gyabii_resukisu--susfs-$(date +%d%m%y-%H%M%S)"
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-gyabii_resukisu-susfs-$(date +%d%m%y-%H%M%S)"
           cd anykernel
           zip -r0 ../"${ZIP_NAME}".zip ./*
           cd ..
