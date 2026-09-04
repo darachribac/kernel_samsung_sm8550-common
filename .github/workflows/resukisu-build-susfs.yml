@@ -98,7 +98,6 @@ jobs:
           cd ..
           HASH=$(sha256sum "${ZIP_NAME}.zip" | awk '{print $1}')
           cat >> "release_notes.md" << EOF
-          Common ReSukiSU + SuSFS 5.15.${KERNEL_VERSION} kernel
           Built at: ${BUILD_DATE}
           
           sha256:
@@ -119,6 +118,7 @@ jobs:
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          name: "ReSukiSU + SuSFS 5.15.${{ env.KERNEL_VERSION }} common kernel"
           tag_name: ${{ steps.package.outputs.tag_name }}
           files: ${{ steps.package.outputs.zip_full_path }}
           body_path: release_notes.md
