@@ -122,3 +122,4 @@ jobs:
           tag_name: ${{ steps.package.outputs.tag_name }}
           files: ${{ steps.package.outputs.zip_full_path }}
           body_path: release_notes.md
+          make_latest: false
