@@ -36,10 +36,11 @@ jobs:
           # Clone Droidspaces-OSS to get patches and config
           git clone --depth=1 https://github.com/ravindu644/Droidspaces-OSS.git droidspaces
           # Extract full kernel version from Makefile
-          KERNEL_VERSION=$(grep -E '^(VERSION|PATCHLEVEL|SUBLEVEL)' ./Makefile | tr '\n' '.' | sed 's/\.$//')
-          echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
-          # Extract just the patchlevel for comparison (e.g., 15 for 5.15)
+          VERSION=$(grep '^VERSION' ./Makefile | awk '{print $3}')
           PATCHLEVEL=$(grep '^PATCHLEVEL' ./Makefile | awk '{print $3}')
+          SUBLEVEL=$(grep '^SUBLEVEL' ./Makefile | awk '{print $3}')
+          KERNEL_VERSION="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
+          echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
           echo "PATCHLEVEL=$PATCHLEVEL" >> $GITHUB_ENV
           # Apply GKI patches based on kernel version
           # For 5.15 kernels (PATCHLEVEL=15), use the below-6.12 patches
