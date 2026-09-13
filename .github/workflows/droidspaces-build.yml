@@ -36,9 +36,9 @@ jobs:
           # Clone Droidspaces-OSS to get patches and config
           git clone --depth=1 https://github.com/ravindu644/Droidspaces-OSS.git droidspaces
           # Extract full kernel version from Makefile
-          VERSION=$(grep '^VERSION' ./Makefile | awk '{print $3}')
-          PATCHLEVEL=$(grep '^PATCHLEVEL' ./Makefile | awk '{print $3}')
-          SUBLEVEL=$(grep '^SUBLEVEL' ./Makefile | awk '{print $3}')
+          VERSION=$(grep '^VERSION' ./Makefile | awk '{print $3}' | xargs)
+          PATCHLEVEL=$(grep '^PATCHLEVEL' ./Makefile | awk '{print $3}' | xargs)
+          SUBLEVEL=$(grep '^SUBLEVEL' ./Makefile | awk '{print $3}' | xargs)
           KERNEL_VERSION="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
           echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
           echo "PATCHLEVEL=$PATCHLEVEL" >> $GITHUB_ENV
