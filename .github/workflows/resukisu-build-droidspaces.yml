@@ -1,0 +1,149 @@
+# build.yml kanged from Rezoss Reza modified to build kernel with Droidspaces support using the main branch
+name: Build kernel (Droidspaces, `main` branch)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 5 * * 1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+       contents: write
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v6
+
+      - name: Set up the toolchain
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends \\
+            bc bison build-essential curl flex gh \\
+            g++-multilib gcc-multilib git gnupg \\
+            lib32readline-dev lib32z1-dev \\
+            libelf-dev liblz4-tool libssl-dev \\
+            lzop zlib1g-dev pahole dwarves cpio zip \\
+            python3 python-is-python3 tar perl lz4 jq
+
+      - name: Download anykernel.zip
+        run: |
+          wget -q https://github.com/gyabii/kernel_samsung_sm8550-common/releases/download/anykernel/anykernel.zip
+
+      - name: Apply Droidspaces support
+        id: droidspaces
+        run: |
+          set -euxo pipefail
+          # Clone Droidspaces-OSS to get patches and config
+          git clone --depth=1 https://github.com/ravindu644/Droidspaces-OSS.git droidspaces
+          KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./Makefile | awk '{print $3}')
+          echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
+          # Determine kernel version numeric for comparisons
+          MAJOR=$(echo $KERNEL_VERSION | cut -d. -f1)
+          MINOR=$(echo $KERNEL_VERSION | cut -d. -f2)
+          PATCH=$(echo $KERNEL_VERSION | cut -d. -f3)
+          VERSION_NUM=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+          echo "VERSION_NUM=$VERSION_NUM" >> $GITHUB_ENV
+          # Apply GKI patches based on version
+          if [ "$VERSION_NUM" -lt 612 ]; then
+            # Below 6.12
+            echo "Applying SYSVIPC kABI fix for kernel < 6.12"
+            patch -p1 < droidspaces/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_6_7_8.patch || \
+            patch -p1 < droidspaces/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_1_2_3.patch || \
+            patch -p1 < droidspaces/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_3_4_5.patch
+            # For kernels 5.10 and below also need POSIX_MQUEUE fix
+            if [ "$VERSION_NUM" -le 510 ]; then
+              echo "Applying POSIX_MQUEUE kABI fix for kernel <= 5.10"
+              patch -p1 < droidspaces/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/002.5.10_or_lower_use_android_abi_padding_for_posix_mqueue.patch
+            fi
+          else
+            # 6.12 and above
+            echo "Applying GKI 6.12+ kABI fix"
+            patch -p1 < droidspaces/Documentation/resources/kernel-patches/GKI/kernel-6.12/001.GKI-6.12-or-above-fix_sysvipc_kabi.patch
+          fi
+          # Apply Droidspaces configuration to gki_defconfig
+          CONFIG_FILE=arch/arm64/configs/gki_defconfig
+          cat >> "$CONFIG_FILE" << 'EOF'
+          # IPC
+          CONFIG_SYSVIPC=y
+          CONFIG_POSIX_MQUEUE=y
+          # Namespaces
+          CONFIG_IPC_NS=y
+          CONFIG_PID_NS=y
+          # HW Access Support
+          CONFIG_DEVTMPFS=y
+          # Networking (Enhanced NAT support)
+          CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y
+          # --- Below configs are optional but recommended ---
+          # Fix for docker unsafe procfs error
+          CONFIG_USER_NS=y
+          # UFW support
+          CONFIG_NETFILTER_XT_TARGET_REJECT=y
+          CONFIG_NETFILTER_XT_TARGET_LOG=y
+          CONFIG_NETFILTER_XT_MATCH_RECENT=y
+          # Fail2ban support
+          CONFIG_IP_SET=y
+          CONFIG_IP_SET_HASH_IP=y
+          CONFIG_IP_SET_HASH_NET=y
+          CONFIG_NETFILTER_XT_SET=y
+          # Enable xattr, posix acl support on tmpfs
+          # For NixOS support
+          CONFIG_TMPFS_POSIX_ACL=y
+          CONFIG_TMPFS_XATTR=y
+          EOF
+
+      - name: Set up swap space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 16
+
+      - name: Build the kernel
+        run: |
+          git config --global user.email "gyabii@proton.me"
+          git config --global user.name "gyabii"
+          chmod +x scripts/build.sh
+          ./scripts/build.sh 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+          if [ ! -f "out/arch/arm64/boot/Image.gz" ]; then
+            echo "ERROR: Kernel compilation failed! out/arch/arm64/boot/Image.gz not found."
+            exit 1
+          fi
+
+      - name: Package image with AnyKernel3
+        id: package
+        run: |
+          BUILD_DATE="$(date)"
+          TIMESTAMP="$(date +%d%m%y-%H%M%S)"
+          set -euxo pipefail
+          unzip "anykernel.zip" -d anykernel/
+          cp out/arch/arm64/boot/Image.gz anykernel/
+          touch -a -m -t 200901010000.00 "anykernel/Image.gz"
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-gyabii_droidspaces-$(date +%d%m%y-%H%M%S)"
+          cd anykernel
+          zip -r0 ../"${ZIP_NAME}".zip ./*
+          cd ..
+          HASH=$(sha256sum "${ZIP_NAME}.zip" | awk '{print $1}')
+          cat >> "release_notes.md" << EOF
+          Built at: ${BUILD_DATE}
+
+          sha256:
+          \`\`\`
+          ${HASH}
+          \`\`\`
+          EOF
+          echo "zip_full_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
+          echo "zip_name=${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
+          echo "tag_name=common-droidspaces-5.15.${KERNEL_VERSION}-${TIMESTAMP}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the flashable kernel
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.package.outputs.zip_name }}
+          path: anykernel/
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: "Droidspaces 5.15.${{ env.KERNEL_VERSION }} common kernel"
+          tag_name: ${{ steps.package.outputs.tag_name }}
+          files: ${{ steps.package.outputs.zip_full_path }}
+          body_path: release_notes.md
+          make_latest: false
